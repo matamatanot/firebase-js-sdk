@@ -107,7 +107,7 @@ export class AuthImpl implements Auth, _FirebaseService {
         return;
       }
 
-      await this.initializeCurrentUser();
+      await this.initializeCurrentUser(popupRedirectResolver);
 
       if (this._deleted) {
         return;
@@ -151,7 +151,16 @@ export class AuthImpl implements Auth, _FirebaseService {
     this.notifyAuthListeners();
   }
 
-  private async initializeCurrentUser(): Promise<void> {
+  private async initializeCurrentUser(popupRedirectResolver?: externs.PopupRedirectResolver): Promise<void> {
+    // First check to see if we have a pending redirect event.
+    if (popupRedirectResolver) {
+      await this.getOrInitRedirectPersistenceManager();
+      const result = await this._popupRedirectResolver!._completeRedirectFn(this, popupRedirectResolver);
+      if (result) {
+        return;
+      };
+    }
+
     const storedUser = (await this.assertedPersistence.getCurrentUser()) as User | null;
     if (!storedUser) {
       return this.directlySetCurrentUser(storedUser);
@@ -227,10 +236,10 @@ export class AuthImpl implements Auth, _FirebaseService {
       }
     );
 
-    return this._updateCurrentUser(user && user._clone());
+    return this._updateCurrentUser(user && user._clone(), false);
   }
 
-  async _updateCurrentUser(user: externs.User | null): Promise<void> {
+  async _updateCurrentUser(user: externs.User | null, isInternal = true): Promise<void> {
     if (this._deleted) {
       return;
     }
@@ -241,10 +250,21 @@ export class AuthImpl implements Auth, _FirebaseService {
         { appName: this.name }
       );
     }
-    return this.queue(async () => {
+
+    const action = async (): Promise<void> => {
       await this.directlySetCurrentUser(user as User | null);
       this.notifyAuthListeners();
-    });
+    };
+    
+    // Bypass the queue if this is an internal invocation and initialization is
+    // incomplete. This state only occurs if there's a pending redirect
+    // operation. That redirect operation was invoked from within the queue,
+    // meaning that we're safe to directly set the user
+    if (isInternal && !this._isInitialized) {
+      return action();
+    }
+
+    return this.queue(action);
   }
 
   async signOut(): Promise<void> {
@@ -253,7 +273,7 @@ export class AuthImpl implements Auth, _FirebaseService {
       await this._setRedirectUser(null);
     }
 
-    return this._updateCurrentUser(null);
+    return this._updateCurrentUser(null, false);
   }
 
   setPersistence(persistence: externs.Persistence): Promise<void> {
@@ -333,8 +353,11 @@ export class AuthImpl implements Auth, _FirebaseService {
   }
 
   async _redirectUserForId(id: string): Promise<User | null> {
-    // Make sure we've cleared any pending ppersistence actions
-    await this.queue(async () => {});
+    // Make sure we've cleared any pending ppersistence actions if we're not in
+    // the initializer
+    if (this._isInitialized) {
+      await this.queue(async () => {});
+    }
 
     if (this._currentUser?._redirectEventId === id) {
       return this._currentUser;
@@ -349,7 +372,11 @@ export class AuthImpl implements Auth, _FirebaseService {
 
   async _persistUserIfCurrent(user: User): Promise<void> {
     if (user === this.currentUser) {
-      return this.queue(async () => this.directlySetCurrentUser(user));
+      if (!this._isInitialized) {
+        return this.directlySetCurrentUser(user);
+      } else {
+        return this.queue(async () => this.directlySetCurrentUser(user));
+      }
     }
   }
 
