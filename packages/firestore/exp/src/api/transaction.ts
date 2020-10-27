@@ -19,12 +19,9 @@ import { Transaction as LiteTransaction } from '../../../lite/src/api/transactio
 import { DocumentSnapshot } from './snapshot';
 import { TransactionRunner } from '../../../src/core/transaction_runner';
 import { AsyncQueue } from '../../../src/util/async_queue';
-import { FirebaseFirestore } from './database';
+import { ensureFirestoreConfigured, FirebaseFirestore } from './database';
 import { Deferred } from '../../../src/util/promise';
-import {
-  ensureFirestoreConfigured,
-  SnapshotMetadata
-} from '../../../src/api/database';
+import { SnapshotMetadata } from '../../../src/api/database';
 import { Transaction as InternalTransaction } from '../../../src/core/transaction';
 import { validateReference } from '../../../lite/src/api/write_batch';
 import { getDatastore } from '../../../lite/src/api/components';

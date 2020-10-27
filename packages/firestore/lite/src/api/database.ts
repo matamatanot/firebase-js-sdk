@@ -24,8 +24,8 @@ import { DatabaseId, DatabaseInfo } from '../../../src/core/database_info';
 import { FirebaseAuthInternalName } from '@firebase/auth-interop-types';
 import {
   CredentialsProvider,
-  CredentialsSettings,
-  FirebaseCredentialsProvider
+  FirebaseCredentialsProvider,
+  CredentialsSettings
 } from '../../../src/api/credentials';
 import { removeComponents } from './components';
 import {
@@ -44,6 +44,15 @@ declare module '@firebase/component' {
 // settings() defaults:
 const DEFAULT_HOST = 'firestore.googleapis.com';
 const DEFAULT_SSL = true;
+
+/**
+ * Options that can be provided in the Firestore constructor when not using
+ * Firebase (aka standalone mode).
+ */
+export interface FirestoreDatabase {
+  projectId: string;
+  database?: string;
+}
 
 export interface Settings {
   host?: string;
@@ -161,19 +170,45 @@ export class FirebaseFirestore implements _FirebaseService {
   // all components have shut down.
   private _terminateTask?: Promise<void>;
 
+  private _app?: FirebaseApp;
+
+  constructor(
+    databaseIdOrApp: FirebaseApp | FirestoreDatabase,
+    authProvider: Provider<FirebaseAuthInternalName>
+  ) {
+    if (typeof (databaseIdOrApp as FirebaseApp).options === 'object') {
+      this._app = databaseIdOrApp as FirebaseApp;
+      this._databaseId = FirebaseFirestore._databaseIdFromApp(
+        databaseIdOrApp as FirebaseApp
+      );
+      this._credentials = new FirebaseCredentialsProvider(authProvider);
+    } else {
+      const external = databaseIdOrApp as FirestoreDatabase;
+      if (!external.projectId) {
+        throw new FirestoreError(
+          Code.INVALID_ARGUMENT,
+          'Must provide projectId'
+        );
+      }
+      this._databaseId = new DatabaseId(external.projectId, external.database);
+    }
+
+    this._credentials = new FirebaseCredentialsProvider(authProvider);
+  }
+
   /**
    * The {@link FirebaseApp app} associated with this `Firestore` service
    * instance.
    */
-  readonly app: FirebaseApp;
-
-  constructor(
-    app: FirebaseApp,
-    authProvider: Provider<FirebaseAuthInternalName>
-  ) {
-    this.app = app;
-    this._databaseId = FirebaseFirestore._databaseIdFromApp(app);
-    this._credentials = new FirebaseCredentialsProvider(authProvider);
+  get app(): FirebaseApp {
+    if (!this._app) {
+      throw new FirestoreError(
+        Code.FAILED_PRECONDITION,
+        "Firestore was not initialized using the Firebase SDK. 'app' is " +
+          'not available'
+      );
+    }
+    return this._app;
   }
 
   get _initialized(): boolean {
@@ -201,6 +236,9 @@ export class FirebaseFirestore implements _FirebaseService {
       this._settings = {};
     }
     this._settingsFrozen = true;
+    // if (this._settings._credentials) {
+    //   this._credentials = makeCredentialsProvider(newSettings.credentials);
+    // }
     return new FirestoreSettings(this._settings);
   }
 
