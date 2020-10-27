@@ -23,16 +23,10 @@ import * as exp from '../index';
 
 import {
   addDoc,
-  clearIndexedDbPersistence,
   collection,
-  collectionGroup,
   deleteDoc,
-  disableNetwork,
   doc,
   DocumentReference as DocumentReferenceExp,
-  enableIndexedDbPersistence,
-  enableMultiTabIndexedDbPersistence,
-  enableNetwork,
   FieldPath as FieldPathExp,
   getDoc,
   getDocFromCache,
@@ -40,19 +34,13 @@ import {
   getDocs,
   getDocsFromCache,
   getDocsFromServer,
-  initializeFirestore,
   onSnapshot,
-  onSnapshotsInSync,
   query,
   queryEqual,
   refEqual,
-  runTransaction,
   setDoc,
   snapshotEqual,
-  terminate,
   updateDoc,
-  waitForPendingWrites,
-  writeBatch,
   endAt,
   endBefore,
   startAfter,
@@ -71,7 +59,6 @@ import {
 } from '../../src/util/input_validation';
 import { Compat } from '../../src/compat/compat';
 import { Firestore } from '../../src/api/database';
-import { debugAssert } from '../../src/util/assert';
 
 export { GeoPoint, Timestamp } from '../index';
 
@@ -377,10 +364,6 @@ export class DocumentSnapshot<T = legacy.DocumentData>
 export class QueryDocumentSnapshot<T = legacy.DocumentData>
   extends DocumentSnapshot<T>
   implements legacy.QueryDocumentSnapshot<T> {
-  constructor(firestore: Firestore, delegate: exp.QueryDocumentSnapshot<T>) {
-    super(firestore, delegate);
-  }
-
   data(options?: legacy.SnapshotOptions): T {
     return this._delegate.data(options)!;
   }
@@ -568,10 +551,6 @@ export class DocumentChange<T = legacy.DocumentData>
 export class CollectionReference<T = legacy.DocumentData>
   extends Query<T>
   implements legacy.CollectionReference<T> {
-  constructor(firestore: Firestore, delegate: exp.CollectionReference<T>) {
-    super(firestore, delegate);
-  }
-
   get _delegate(): exp.CollectionReference<T> {
     return this._maybeDelegate as exp.CollectionReference<T>;
   }

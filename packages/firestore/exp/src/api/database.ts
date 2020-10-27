@@ -53,7 +53,6 @@ import {
 } from '../../../src/local/indexeddb_persistence';
 import { PersistenceSettings } from '../../../exp-types';
 import { debugAssert } from '../../../src/util/assert';
-import { DatabaseInfo } from '../../../src/core/database_info';
 
 /** DOMException error code constants. */
 const DOM_EXCEPTION_INVALID_STATE = 11;

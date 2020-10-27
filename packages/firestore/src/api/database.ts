@@ -143,10 +143,7 @@ import {
   WriteBatch as PublicWriteBatch
 } from '@firebase/firestore-types';
 import { newUserDataReader } from '../../lite/src/api/reference';
-import {
-  FirestoreSettings,
-  makeDatabaseInfo
-} from '../../lite/src/api/database';
+import { FirestoreSettings } from '../../lite/src/api/database';
 import { DEFAULT_HOST } from '../../lite/src/api/components';
 
 /**
@@ -381,6 +378,7 @@ export class Firestore
 
   onSnapshotsInSync(observer: PartialObserver<void>): Unsubscribe;
   onSnapshotsInSync(onSync: () => void): Unsubscribe;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSnapshotsInSync(arg: any): Unsubscribe {
     return onSnapshotsInSync(this._delegate, arg);
   }
@@ -2176,8 +2174,4 @@ export function applyFirestoreDataConverter<T>(
     convertedValue = value as DocumentData;
   }
   return convertedValue;
-}
-
-function contains(obj: object, key: string): obj is { key: unknown } {
-  return Object.prototype.hasOwnProperty.call(obj, key);
 }

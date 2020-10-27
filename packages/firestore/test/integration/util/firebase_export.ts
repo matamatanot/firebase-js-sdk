@@ -36,7 +36,6 @@ import { FieldValue } from '../../../src/compat/field_value';
 import { initializeApp } from '@firebase/app-exp';
 import { FirebaseApp } from '@firebase/app-types';
 import { Firestore } from '../../../src/api/database';
-import { EmptyCredentialsProvider } from '../../../src/api/credentials';
 import { Provider, ComponentContainer } from '@firebase/component';
 
 /**
