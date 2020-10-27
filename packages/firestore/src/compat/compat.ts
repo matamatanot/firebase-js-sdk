@@ -30,10 +30,6 @@ export abstract class Compat<T> {
     this._maybeDelegate = delegate;
   }
 
-  set _delegate(delegate: T) {
-    this._maybeDelegate = delegate;
-  }
-
   get _delegate(): T {
     debugAssert(!!this._maybeDelegate, 'Delegate has not yet been initialized');
     return this._maybeDelegate;
