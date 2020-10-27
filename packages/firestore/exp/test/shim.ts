@@ -71,6 +71,7 @@ import {
 } from '../../src/util/input_validation';
 import { Compat } from '../../src/compat/compat';
 import { Firestore } from '../../src/api/database';
+import { debugAssert } from '../../src/util/assert';
 
 export { GeoPoint, Timestamp } from '../index';
 
@@ -376,15 +377,12 @@ export class DocumentSnapshot<T = legacy.DocumentData>
 export class QueryDocumentSnapshot<T = legacy.DocumentData>
   extends DocumentSnapshot<T>
   implements legacy.QueryDocumentSnapshot<T> {
-  constructor(
-    firestore: Firestore,
-    readonly _delegate: exp.QueryDocumentSnapshot<T>
-  ) {
-    super(firestore, _delegate);
+  constructor(firestore: Firestore, delegate: exp.QueryDocumentSnapshot<T>) {
+    super(firestore, delegate);
   }
 
   data(options?: legacy.SnapshotOptions): T {
-    return this._delegate.data(options);
+    return this._delegate.data(options)!;
   }
 }
 
@@ -570,11 +568,12 @@ export class DocumentChange<T = legacy.DocumentData>
 export class CollectionReference<T = legacy.DocumentData>
   extends Query<T>
   implements legacy.CollectionReference<T> {
-  constructor(
-    firestore: Firestore,
-    readonly _delegate: exp.CollectionReference<T>
-  ) {
-    super(firestore, _delegate);
+  constructor(firestore: Firestore, delegate: exp.CollectionReference<T>) {
+    super(firestore, delegate);
+  }
+
+  get _delegate(): exp.CollectionReference<T> {
+    return this._maybeDelegate as exp.CollectionReference<T>;
   }
 
   readonly id = this._delegate.id;
