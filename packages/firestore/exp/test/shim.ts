@@ -359,11 +359,14 @@ export class DocumentSnapshot<T = legacy.DocumentData>
   }
 
   data(options?: legacy.SnapshotOptions): T | undefined {
-    return wrap(this._delegate.data(options));
+    return wrap(this._firestore, this._delegate.data(options));
   }
 
   get(fieldPath: string | FieldPath, options?: legacy.SnapshotOptions): any {
-    return wrap(this._delegate.get(unwrap(fieldPath), options));
+    return wrap(
+      this._firestore,
+      this._delegate.get(unwrap(fieldPath), options)
+    );
   }
 
   isEqual(other: DocumentSnapshot<T>): boolean {
@@ -664,25 +667,20 @@ export class Blob extends Compat<BytesExp> implements legacy.Blob {
  * Takes document data that uses the firestore-exp API types and replaces them
  * with the API types defined in this shim.
  */
-function wrap(value: any): any {
+function wrap(firestore: Firestore, value: any): any {
   if (Array.isArray(value)) {
-    return value.map(v => wrap(v));
+    return value.map(v => wrap(firestore, v));
   } else if (value instanceof FieldPathExp) {
     return new FieldPath(...value._internalPath.toArray());
   } else if (value instanceof BytesExp) {
     return new Blob(value);
   } else if (value instanceof DocumentReferenceExp) {
-    // TODO(mrschmidt): Ideally, we should use an existing instance of
-    // FirebaseFirestore here rather than instantiating a new instance
-    return new DocumentReference(
-      null as any, //new Firestore(value.firestore as exp.FirebaseFirestore),
-      value
-    );
+    return new DocumentReference(firestore, value);
   } else if (isPlainObject(value)) {
     const obj: any = {};
     for (const key in value) {
       if (value.hasOwnProperty(key)) {
-        obj[key] = wrap(value[key]);
+        obj[key] = wrap(firestore, value[key]);
       }
     }
     return obj;
