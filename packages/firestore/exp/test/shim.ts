@@ -73,7 +73,6 @@ import { Compat } from '../../src/compat/compat';
 import { Firestore } from '../../src/api/database';
 
 export { GeoPoint, Timestamp } from '../index';
-export { FieldValue } from '../../src/compat/field_value';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

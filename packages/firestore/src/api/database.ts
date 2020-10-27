@@ -18,6 +18,7 @@
 import { Value as ProtoValue } from '../protos/firestore_proto_api';
 
 import { FirebaseApp } from '@firebase/app-types';
+import { FirebaseApp as FirebaseAppExp } from '@firebase/app-types-exp';
 import { _FirebaseApp, FirebaseService } from '@firebase/app-types/private';
 import { Blob } from './blob';
 import { DatabaseId } from '../core/database_info';
@@ -240,7 +241,10 @@ export class Firestore
   // ComponentProvider to ensure backwards compatibility with the format
   // expected by the console build.
   constructor(
-    private readonly _databaseIdOrApp: FirestoreDatabase | FirebaseApp,
+    private readonly _databaseIdOrApp:
+      | FirestoreDatabase
+      | FirebaseApp
+      | FirebaseAppExp,
     private readonly _authProvider: Provider<FirebaseAuthInternalName>,
     private _persistenceProvider: PersistenceProvider = new MemoryPersistenceProvider()
   ) {

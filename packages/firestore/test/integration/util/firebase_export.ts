@@ -30,17 +30,14 @@ import * as firestore from '@firebase/firestore-types';
 
 import firebase from '@firebase/app';
 import * as exp from '../../../exp/test/shim';
-import {
-  FirebaseApp as FirebaseAppShim,
-  FirebaseFirestore as FirestoreShim
-} from '../../../exp/test/shim';
-import {
-  getFirestore,
-  initializeFirestore
-} from '../../../exp/src/api/database';
+import { FirebaseApp as FirebaseAppShim } from '../../../exp/test/shim';
+import { FieldValue } from '../../../src/compat/field_value';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { initializeApp } from '@firebase/app-exp';
 import { FirebaseApp } from '@firebase/app-types';
+import { Firestore } from '../../../src/api/database';
+import { EmptyCredentialsProvider } from '../../../src/api/credentials';
+import { Provider, ComponentContainer } from '@firebase/component';
 
 /**
  * Detects whether we are running against the functionial (tree-shakeable)
@@ -75,10 +72,10 @@ export function newTestFirestore(
       typeof nameOrApp === 'string'
         ? initializeApp({ apiKey: 'fake-api-key', projectId }, nameOrApp)
         : (nameOrApp as FirebaseAppShim)._delegate;
-    const firestore = settings
-      ? initializeFirestore(app, settings)
-      : getFirestore(app);
-    return new FirestoreShim(firestore);
+    return new Firestore(
+      app,
+      new Provider('auth-internal', new ComponentContainer('default'))
+    );
   } else {
     const app =
       typeof nameOrApp === 'string'
@@ -102,9 +99,6 @@ export function newTestFirestore(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const legacyNamespace = (firebase as any).firestore;
 
-const Firestore = usesFunctionalApi()
-  ? exp.FirebaseFirestore
-  : legacyNamespace.FirebaseFirestore;
 const FieldPath = usesFunctionalApi()
   ? exp.FieldPath
   : legacyNamespace.FieldPath;
@@ -112,9 +106,6 @@ const Timestamp = usesFunctionalApi()
   ? exp.Timestamp
   : legacyNamespace.Timestamp;
 const GeoPoint = usesFunctionalApi() ? exp.GeoPoint : legacyNamespace.GeoPoint;
-const FieldValue = usesFunctionalApi()
-  ? exp.FieldValue
-  : legacyNamespace.FieldValue;
 const Blob = usesFunctionalApi() ? exp.Blob : legacyNamespace.Blob;
 
 export { Firestore, FieldValue, FieldPath, Timestamp, Blob, GeoPoint };
